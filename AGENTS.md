@@ -78,14 +78,23 @@ Cargá la skill correspondiente al contexto **ANTES** de escribir código. Aplic
 
 | Agente | Rol | Skills que carga |
 |--------|-----|------------------|
-| **Backend Core** | FastAPI / SQLAlchemy / migraciones / modelos | `fastapi-templates`, `postgresql-table-design`, `python-testing-patterns`, `test-driven-development` |
-| **Backend Aux** | Servicios, integraciones, seguridad, performance | `api-security-best-practices`, `postgresql-optimization`, `systematic-debugging` |
+| **Backend Core** | FastAPI / SQLAlchemy / migraciones / modelos | `fastapi-templates`, `sqlalchemy-alembic-expert-best-practices-code-review`, `postgresql-expert-best-practices-code-review`, `postgresql-table-design`, `python-testing-patterns`, `test-driven-development`, `api-and-interface-design`, `source-driven-development` |
+| **Backend Aux** | Servicios, integraciones, seguridad, performance | `api-security-best-practices`, `postgresql-optimization`, `systematic-debugging`, `security-and-hardening`, `ci-cd-and-automation`, `source-driven-development` |
 | **Frontend** | React / TanStack / Tailwind / E2E | `typescript-advanced-types`, `tailwind-design-system`, `playwright-best-practices` |
-| **DevOps** | Contenedores / build | `multi-stage-dockerfile` |
+| **DevOps** | Contenedores / build | `multi-stage-dockerfile`, `ci-cd-and-automation`, `source-driven-development` |
 | **Transversal** | Calidad / revisión | `code-review-excellence`, `systematic-debugging` |
 | **Orquestación** | SDD / OPSX / docs | `kb-creator`, `roadmap-generator`, `agent-instruction`, `find-skill` |
 
-> **Gap conocido**: no hay skill de buenas prácticas React instalada (`vercel-react-best-practices` recomendada pero NO instalada por decisión del usuario). El stack queda cubierto ~100% por las skills preinstaladas.
+### Router de Skills
+
+- **FastAPI endpoints / contratos / DTOs / errores**: cargar `api-and-interface-design` + `source-driven-development`.
+- **SQLAlchemy models / repositories / Alembic**: cargar `sqlalchemy-alembic-expert-best-practices-code-review` + `postgresql-expert-best-practices-code-review`.
+- **PostgreSQL schema / índices / performance**: cargar `postgresql-expert-best-practices-code-review` y, si aplica tuning, `postgresql-optimization`.
+- **Auth / JWT / RBAC / secretos / hardening**: cargar `security-and-hardening` además de las skills de seguridad ya instaladas.
+- **Pipelines / automation / deploy flow**: cargar `ci-cd-and-automation`.
+- **Decisiones sensibles de framework o librería**: cargar `source-driven-development` antes de implementar.
+
+> **Gap conocido**: no hay skill de buenas prácticas React instalada (`vercel-react-best-practices` recomendada pero NO instalada por decisión del usuario). En backend/API/DB el router queda reforzado con las skills nuevas.
 
 ---
 
