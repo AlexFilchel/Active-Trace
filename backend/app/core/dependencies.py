@@ -21,6 +21,7 @@ class AuthenticatedUser:
     tenant_id: uuid.UUID
     roles: list[str]
     email: str | None = None
+    impersonating_user_id: uuid.UUID | None = None
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -47,10 +48,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials | None = De
 
     try:
         claims = decode_access_token(credentials.credentials)
+        impersonating_raw = claims.get("impersonating_user_id")
+        impersonating_user_id = uuid.UUID(str(impersonating_raw)) if impersonating_raw else None
         return AuthenticatedUser(
             user_id=uuid.UUID(str(claims["user_id"])),
             tenant_id=uuid.UUID(str(claims["tenant_id"])),
             roles=[str(role) for role in claims["roles"]],
+            impersonating_user_id=impersonating_user_id,
         )
     except (KeyError, ValueError, TypeError, TokenValidationError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required.") from exc

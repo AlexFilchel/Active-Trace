@@ -5,13 +5,19 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import secrets
+from typing import TYPE_CHECKING
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+if TYPE_CHECKING:
+    from app.core.dependencies import AuthenticatedUser
+
+from app.core.audit import audit_action
 from app.core.security import (
     build_totp_provisioning_uri,
     create_access_token,
+    create_impersonation_token,
     generate_totp_secret,
     hash_password,
     verify_password,
@@ -52,6 +58,11 @@ class InvalidTokenError(AuthServiceError):
 class RateLimitExceededError(AuthServiceError):
     status_code = 429
     detail = "Too many login attempts. Try again later."
+
+
+class ImpersonationNotAllowedError(AuthServiceError):
+    status_code = 403
+    detail = "Impersonation target is not accessible."
 
 
 @dataclass
@@ -283,6 +294,79 @@ class AuthService:
             access_token=create_access_token(user_id=str(user.id), tenant_id=str(user.tenant_id), roles=user.roles),
             refresh_token=raw_refresh_token,
         )
+
+    async def impersonate_user(
+        self,
+        *,
+        actor: "AuthenticatedUser",
+        target_user_id: uuid.UUID,
+        ip: str | None = None,
+        user_agent: str | None = None,
+    ) -> dict[str, object]:
+        """Emit an impersonation access token for the target user.
+
+        Verifies that the target belongs to the same tenant as the actor.
+        Records IMPERSONACION_INICIAR in audit_log.
+
+        Args:
+            actor:          Authenticated actor (holds impersonacion:usar).
+            target_user_id: UUID of the user to impersonate.
+            ip:             Client IP address.
+            user_agent:     HTTP User-Agent header.
+
+        Returns:
+            Dict with access_token.
+
+        Raises:
+            ImpersonationNotAllowedError: if target not found or wrong tenant.
+        """
+        user_repository = AuthUserRepository(session=self.session, tenant_id=actor.tenant_id)
+        target = await user_repository.get_active_by_id(target_user_id)
+        if target is None or target.tenant_id != actor.tenant_id:
+            raise ImpersonationNotAllowedError()
+
+        access_token = create_impersonation_token(
+            actor_user_id=str(actor.user_id),
+            impersonated_user_id=str(target.id),
+            tenant_id=str(actor.tenant_id),
+            roles=actor.roles,
+        )
+
+        await audit_action(
+            session=self.session,
+            actor_id=actor.user_id,
+            tenant_id=actor.tenant_id,
+            accion="IMPERSONACION_INICIAR",
+            impersonando_id=target.id,
+            ip=ip,
+            user_agent=user_agent,
+        )
+        await self.session.commit()
+
+        return {"access_token": access_token, "token_type": "bearer"}
+
+    async def end_impersonation(
+        self,
+        *,
+        actor: "AuthenticatedUser",
+        ip: str | None = None,
+        user_agent: str | None = None,
+    ) -> None:
+        """Record IMPERSONACION_FINALIZAR and return.
+
+        The token expires naturally (JWT is stateless) — this endpoint
+        only exists to create an audit trail for the session end.
+        """
+        await audit_action(
+            session=self.session,
+            actor_id=actor.user_id,
+            tenant_id=actor.tenant_id,
+            accion="IMPERSONACION_FINALIZAR",
+            impersonando_id=actor.impersonating_user_id,
+            ip=ip,
+            user_agent=user_agent,
+        )
+        await self.session.commit()
 
     def _is_refresh_session_compromised(self, refresh_session) -> bool:
         now = self.now_provider()

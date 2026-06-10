@@ -86,6 +86,31 @@ def create_access_token(*, user_id: str, tenant_id: str, roles: list[str]) -> st
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
 
+def create_impersonation_token(
+    *,
+    actor_user_id: str,
+    impersonated_user_id: str,
+    tenant_id: str,
+    roles: list[str],
+) -> str:
+    """Emit an access token with the additional impersonating_user_id claim.
+
+    Design decision D4 (design.md):
+        user_id = real actor, impersonating_user_id = impersonated user.
+        The impersonated user never appears as actor.
+    """
+    settings = get_settings()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+    payload = {
+        "user_id": actor_user_id,
+        "tenant_id": tenant_id,
+        "roles": roles,
+        "impersonating_user_id": impersonated_user_id,
+        "exp": int(expires_at.timestamp()),
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm="HS256")
+
+
 def decode_access_token(token: str) -> dict[str, object]:
     try:
         return jwt.decode(token, get_settings().secret_key, algorithms=["HS256"])

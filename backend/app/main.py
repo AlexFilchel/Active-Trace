@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.v1.routers.auth import router as auth_router
+from app.api.v1.routers.estructura import router as estructura_router
 from app.api.v1.routers.health import router as health_router
 from app.core.config import get_settings
 from app.core.database import dispose_database, initialize_database
@@ -28,6 +29,7 @@ def create_app() -> FastAPI:
     app.state.recovery_delivery = NullRecoveryDelivery()
     app.include_router(health_router)
     app.include_router(auth_router)
+    app.include_router(estructura_router)
     configure_observability(app, settings)
     return app
 

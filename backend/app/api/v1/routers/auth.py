@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import AuthenticatedUser, get_current_user, get_db
+from app.core.permissions import require_permission
 from app.schemas.auth import (
     ForgotPasswordRequest,
     LoginChallengeVerifyRequest,
@@ -13,7 +14,7 @@ from app.schemas.auth import (
     ResetPasswordRequest,
     TotpVerifyRequest,
 )
-from app.services.auth import AuthService, AuthServiceError, InMemoryLoginRateLimiter, NullRecoveryDelivery, utc_now
+from app.services.auth import AuthService, AuthServiceError, ImpersonationNotAllowedError, InMemoryLoginRateLimiter, NullRecoveryDelivery, utc_now
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -144,3 +145,51 @@ async def reset_password(payload: ResetPasswordRequest, request: Request, db: As
         return await service.reset_password(token=payload.token, new_password=payload.new_password)
     except AuthServiceError as exc:
         _raise_http_error(exc)
+
+
+@router.post("/impersonate/end", status_code=status.HTTP_204_NO_CONTENT)
+async def end_impersonation(
+    request: Request,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """End an impersonation session.
+
+    Records IMPERSONACION_FINALIZAR in audit_log. The token expires
+    naturally on its TTL — this endpoint creates the audit trail.
+    Must be registered BEFORE the /{target_user_id} route to avoid
+    FastAPI matching "end" as a UUID path parameter.
+    """
+    service = _build_auth_service(request=request, db=db)
+    await service.end_impersonation(
+        actor=current_user,
+        ip=_client_ip(request),
+        user_agent=request.headers.get("user-agent"),
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/impersonate/{target_user_id}")
+async def impersonate_user(
+    target_user_id: str,
+    request: Request,
+    current_user: AuthenticatedUser = require_permission("impersonacion:usar"),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    """Emit an impersonation token for target_user_id.
+
+    Requires impersonacion:usar permission. Records IMPERSONACION_INICIAR.
+    """
+    import uuid as _uuid
+    service = _build_auth_service(request=request, db=db)
+    try:
+        return await service.impersonate_user(
+            actor=current_user,
+            target_user_id=_uuid.UUID(target_user_id),
+            ip=_client_ip(request),
+            user_agent=request.headers.get("user-agent"),
+        )
+    except ImpersonationNotAllowedError as exc:
+        _raise_http_error(exc)
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid user ID.") from exc

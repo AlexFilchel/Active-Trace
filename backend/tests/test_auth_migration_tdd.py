@@ -45,6 +45,15 @@ async def reset_auth_migration_state(database_url: str) -> None:
     engine = create_async_engine(database_url)
 
     async with engine.begin() as connection:
+        await connection.exec_driver_sql("DROP TRIGGER IF EXISTS audit_log_immutable ON audit_log")
+        await connection.exec_driver_sql("DROP FUNCTION IF EXISTS audit_log_immutable_fn")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS audit_log CASCADE")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS cohorte CASCADE")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS carrera CASCADE")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS materia CASCADE")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS rol_permiso CASCADE")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS permiso CASCADE")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS rol CASCADE")
         await connection.exec_driver_sql("DROP TABLE IF EXISTS auth_password_reset_token CASCADE")
         await connection.exec_driver_sql("DROP TABLE IF EXISTS auth_login_challenge CASCADE")
         await connection.exec_driver_sql("DROP TABLE IF EXISTS auth_totp_credential CASCADE")
