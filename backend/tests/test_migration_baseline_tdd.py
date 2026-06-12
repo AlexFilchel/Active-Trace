@@ -42,6 +42,8 @@ async def reset_migration_state(database_url: str) -> None:
         await connection.exec_driver_sql("DROP TRIGGER IF EXISTS audit_log_immutable ON audit_log")
         await connection.exec_driver_sql("DROP FUNCTION IF EXISTS audit_log_immutable_fn")
         await connection.exec_driver_sql("DROP TABLE IF EXISTS audit_log CASCADE")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS asignacion CASCADE")
+        await connection.exec_driver_sql("DROP TABLE IF EXISTS usuario CASCADE")
         await connection.exec_driver_sql("DROP TABLE IF EXISTS cohorte CASCADE")
         await connection.exec_driver_sql("DROP TABLE IF EXISTS carrera CASCADE")
         await connection.exec_driver_sql("DROP TABLE IF EXISTS materia CASCADE")

@@ -13,6 +13,7 @@ from app.repositories.auth import (
 from app.repositories.estructura import CarreraRepository, CohorteRepository, MateriaRepository
 from app.repositories.rbac import RbacRepository
 from app.repositories.tenant_scoped import TenantScopedRepository
+from app.repositories.usuarios import AsignacionRepository, UsuarioRepository
 
 __all__ = [
     "AuditLogRepository",
@@ -21,6 +22,7 @@ __all__ = [
     "AuthPasswordResetRepository",
     "AuthTotpRepository",
     "AuthUserRepository",
+    "AsignacionRepository",
     "CarreraRepository",
     "CohorteRepository",
     "LoginChallengeRepository",
@@ -29,5 +31,6 @@ __all__ = [
     "RbacRepository",
     "RefreshSessionRepository",
     "TenantScopedRepository",
+    "UsuarioRepository",
     "normalize_email",
 ]

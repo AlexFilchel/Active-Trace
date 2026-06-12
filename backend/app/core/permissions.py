@@ -19,6 +19,8 @@ async def get_user_permissions(
     roles: list[str],
     tenant_id: uuid.UUID,
     session: AsyncSession,
+    *,
+    auth_user_id: uuid.UUID | None = None,
 ) -> set[str]:
     """Resolve the union of effective permissions for the given roles within a tenant.
 
@@ -35,7 +37,10 @@ async def get_user_permissions(
         Set of permission strings for the given roles in the tenant.
     """
     repo = RbacRepository(session=session, tenant_id=tenant_id)
-    return await repo.get_permissions_for_roles(roles)
+    permissions = await repo.get_permissions_for_roles(roles)
+    if auth_user_id is not None:
+        permissions |= await repo.get_active_assignment_permissions_for_auth_user(auth_user_id=auth_user_id)
+    return permissions
 
 
 def require_permission(permission: str) -> Depends:
@@ -64,6 +69,7 @@ def require_permission(permission: str) -> Depends:
             current_user.roles,
             current_user.tenant_id,
             db,
+            auth_user_id=current_user.user_id,
         )
 
         if permission not in effective_permissions:

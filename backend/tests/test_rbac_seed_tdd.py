@@ -39,6 +39,8 @@ async def reset_full_state(database_url: str) -> None:
         await conn.exec_driver_sql("DROP TRIGGER IF EXISTS audit_log_immutable ON audit_log")
         await conn.exec_driver_sql("DROP FUNCTION IF EXISTS audit_log_immutable_fn")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS audit_log CASCADE")
+        await conn.exec_driver_sql("DROP TABLE IF EXISTS asignacion CASCADE")
+        await conn.exec_driver_sql("DROP TABLE IF EXISTS usuario CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS cohorte CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS carrera CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS materia CASCADE")

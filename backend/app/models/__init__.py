@@ -3,6 +3,7 @@ from app.models.auth import AuthLoginChallenge, AuthPasswordResetToken, AuthRefr
 from app.models.base import Tenant, TenantScopedMixin, UuidLifecycleMixin
 from app.models.estructura import Carrera, Cohorte, Materia
 from app.models.rbac import Permiso, Rol, RolPermiso
+from app.models.usuarios import Asignacion, Usuario
 
 __all__ = [
     "AuditLog",
@@ -11,6 +12,7 @@ __all__ = [
     "AuthRefreshSession",
     "AuthTotpCredential",
     "AuthUser",
+    "Asignacion",
     "Carrera",
     "Cohorte",
     "Materia",
@@ -19,5 +21,6 @@ __all__ = [
     "RolPermiso",
     "Tenant",
     "TenantScopedMixin",
+    "Usuario",
     "UuidLifecycleMixin",
 ]

@@ -1,0 +1,36 @@
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+import uuid
+
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import Base, get_session_factory, initialize_database
+from app.models import Tenant
+
+
+async def ensure_schema() -> None:
+    engine = initialize_database()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+async def clean_database(session: AsyncSession) -> None:
+    for table in reversed(Base.metadata.sorted_tables):
+        await session.execute(delete(table))
+    await session.commit()
+
+
+async def tenant_session() -> AsyncIterator[tuple[AsyncSession, Tenant, Tenant]]:
+    await ensure_schema()
+    session_factory = get_session_factory()
+
+    async with session_factory() as session:
+        await clean_database(session)
+        tenant_a = Tenant(name="Tenant A", slug=f"tenant-a-{uuid.uuid4()}")
+        tenant_b = Tenant(name="Tenant B", slug=f"tenant-b-{uuid.uuid4()}")
+        session.add_all([tenant_a, tenant_b])
+        await session.commit()
+        yield session, tenant_a, tenant_b
+        await clean_database(session)
