@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+import sys
+import os
+
+# Agrega el directorio raíz del backend al path
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
 from logging.config import fileConfig
 
 from alembic import context
@@ -8,13 +15,16 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 import app.models
+from app.core.config import get_settings
 from app.core.database import Base
-
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# Override sqlalchemy.url from app settings so alembic.ini never needs credentials
+config.set_main_option("sqlalchemy.url", get_settings().database_url.unicode_string())
 
 target_metadata = Base.metadata
 

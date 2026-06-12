@@ -27,6 +27,8 @@ async def reset_state(database_url: str) -> None:
     engine = create_async_engine(database_url)
     async with engine.begin() as conn:
         for table_name in [
+            "calificacion",
+            "umbral_materia",
             "entrada_padron",
             "version_padron",
             "asignacion",
