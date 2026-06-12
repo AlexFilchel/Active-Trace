@@ -1,7 +1,15 @@
 import os
+import sys
 
 import pytest
 import pytest_asyncio
+
+
+def pytest_configure(config):
+    # asyncpg requires SelectorEventLoop; ProactorEventLoop (Windows default) is incompatible
+    if sys.platform == "win32":
+        import asyncio
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 @pytest.fixture(autouse=True)

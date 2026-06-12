@@ -14,6 +14,13 @@ async def ensure_schema() -> None:
     engine = initialize_database()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Apply additive column migrations for columns added after initial create_all
+        _ADDITIVE_COLUMNS = [
+            "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_url VARCHAR(500)",
+            "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_token_encrypted VARCHAR(512)",
+        ]
+        for stmt in _ADDITIVE_COLUMNS:
+            await conn.execute(text(stmt))
 
 
 async def clean_database(session: AsyncSession) -> None:

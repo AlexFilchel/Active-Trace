@@ -1,7 +1,7 @@
 import uuid
 
 import pytest
-from sqlalchemy import String, delete
+from sqlalchemy import String, delete, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, get_session_factory, initialize_database
@@ -23,6 +23,9 @@ async def tenant_repository_session(valid_env):
     async with engine.begin() as connection:
         await connection.run_sync(Tenant.__table__.create, checkfirst=True)
         await connection.run_sync(RepositoryRecord.__table__.create, checkfirst=True)
+        # Ensure additive columns exist if tenant table was left in a downgraded state
+        await connection.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_url VARCHAR(500)"))
+        await connection.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_token_encrypted VARCHAR(512)"))
 
     session_factory = get_session_factory()
 

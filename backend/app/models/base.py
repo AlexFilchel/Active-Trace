@@ -43,3 +43,5 @@ class Tenant(UuidLifecycleMixin, Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(120), nullable=False, unique=True, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    moodle_ws_url: Mapped[str | None] = mapped_column(String(500), nullable=True, default=None)
+    moodle_ws_token_encrypted: Mapped[str | None] = mapped_column(String(512), nullable=True, default=None)

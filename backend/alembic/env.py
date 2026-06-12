@@ -51,5 +51,10 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     import asyncio
+    import sys
+
+    # asyncpg on Windows requires SelectorEventLoop (ProactorEventLoop is incompatible)
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     asyncio.run(run_migrations_online())
