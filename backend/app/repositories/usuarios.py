@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 import uuid
 
+from sqlalchemy import or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.usuarios import Asignacion, Usuario
@@ -20,6 +21,25 @@ class UsuarioRepository(TenantScopedRepository[Usuario]):
     async def get_by_auth_user_id(self, auth_user_id: uuid.UUID) -> Usuario | None:
         statement = self._base_query().where(Usuario.auth_user_id == auth_user_id)
         return await self.session.scalar(statement)
+
+    async def search_docentes(self, q: str, *, limit: int = 20) -> list[Usuario]:
+        from sqlalchemy import select
+        stmt = (
+            select(Usuario)
+            .where(Usuario.tenant_id == self.context.tenant_id)
+            .where(Usuario.deleted_at.is_(None))
+            .where(Usuario.estado == "Activo")
+            .where(
+                or_(
+                    Usuario.nombre.ilike(f"%{q}%"),
+                    Usuario.apellidos.ilike(f"%{q}%"),
+                )
+            )
+            .order_by(Usuario.apellidos, Usuario.nombre)
+            .limit(limit)
+        )
+        result = await self.session.scalars(stmt)
+        return list(result.all())
 
 
 class AsignacionRepository(TenantScopedRepository[Asignacion]):
@@ -60,3 +80,65 @@ class AsignacionRepository(TenantScopedRepository[Asignacion]):
 
     async def get_by_usuario_and_rol(self, usuario_id: uuid.UUID, rol_id: uuid.UUID) -> list[Asignacion]:
         return await self.list(usuario_id=usuario_id, rol_id=rol_id)
+
+    async def get_by_usuario(self, usuario_id: uuid.UUID) -> list[Asignacion]:
+        return await self.list(usuario_id=usuario_id)
+
+    async def list_by_equipo(
+        self,
+        *,
+        materia_id: uuid.UUID | None = None,
+        carrera_id: uuid.UUID | None = None,
+        cohorte_id: uuid.UUID | None = None,
+        rol_id: uuid.UUID | None = None,
+        usuario_id: uuid.UUID | None = None,
+        active_only: bool = False,
+    ) -> list[Asignacion]:
+        return await self.list(
+            materia_id=materia_id,
+            carrera_id=carrera_id,
+            cohorte_id=cohorte_id,
+            rol_id=rol_id,
+            usuario_id=usuario_id,
+            active_only=active_only,
+        )
+
+    async def bulk_create(self, asignaciones: list[Asignacion]) -> list[Asignacion]:
+        self.session.add_all(asignaciones)
+        await self.session.flush()
+        return asignaciones
+
+    async def bulk_update_vigencia(
+        self,
+        *,
+        materia_id: uuid.UUID,
+        carrera_id: uuid.UUID,
+        cohorte_id: uuid.UUID,
+        desde: date,
+        hasta: date | None,
+    ) -> int:
+        stmt = (
+            update(Asignacion)
+            .where(Asignacion.tenant_id == self.context.tenant_id)
+            .where(Asignacion.materia_id == materia_id)
+            .where(Asignacion.carrera_id == carrera_id)
+            .where(Asignacion.cohorte_id == cohorte_id)
+            .where(Asignacion.deleted_at.is_(None))
+            .values(desde=desde, hasta=hasta)
+        )
+        result = await self.session.execute(stmt)
+        return result.rowcount
+
+    async def get_vigentes_by_equipo(
+        self,
+        *,
+        materia_id: uuid.UUID,
+        carrera_id: uuid.UUID,
+        cohorte_id: uuid.UUID,
+    ) -> list[Asignacion]:
+        return await self.list(
+            materia_id=materia_id,
+            carrera_id=carrera_id,
+            cohorte_id=cohorte_id,
+            active_only=True,
+        )

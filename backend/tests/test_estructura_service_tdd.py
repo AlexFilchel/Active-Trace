@@ -22,6 +22,7 @@ from app.core.database import get_session_factory, initialize_database
 from app.models import AuthLoginChallenge, AuthPasswordResetToken, AuthRefreshSession, AuthTotpCredential, AuthUser, Tenant
 from app.models.rbac import Permiso, Rol, RolPermiso
 from app.models.estructura import Carrera, Cohorte, Materia
+from app.models.usuarios import Asignacion, Usuario
 from app.services.estructura import EstructuraService, ConflictError, NotFoundError, BusinessRuleError
 
 
@@ -46,12 +47,14 @@ async def svc_session(valid_env):
     session_factory = get_session_factory()
 
     async with session_factory() as session:
+        await session.execute(delete(Asignacion))
         await session.execute(delete(Cohorte))
         await session.execute(delete(Carrera))
         await session.execute(delete(Materia))
         await session.execute(delete(RolPermiso))
         await session.execute(delete(Permiso))
         await session.execute(delete(Rol))
+        await session.execute(delete(Usuario))
         await session.execute(delete(AuthPasswordResetToken))
         await session.execute(delete(AuthLoginChallenge))
         await session.execute(delete(AuthTotpCredential))
@@ -67,12 +70,14 @@ async def svc_session(valid_env):
 
         yield session, tenant_a, tenant_b
 
+        await session.execute(delete(Asignacion))
         await session.execute(delete(Cohorte))
         await session.execute(delete(Carrera))
         await session.execute(delete(Materia))
         await session.execute(delete(RolPermiso))
         await session.execute(delete(Permiso))
         await session.execute(delete(Rol))
+        await session.execute(delete(Usuario))
         await session.execute(delete(AuthPasswordResetToken))
         await session.execute(delete(AuthLoginChallenge))
         await session.execute(delete(AuthTotpCredential))

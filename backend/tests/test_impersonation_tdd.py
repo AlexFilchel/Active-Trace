@@ -21,6 +21,7 @@ from app.core.database import get_session_factory, initialize_database
 from app.core.security import create_access_token, decode_access_token, hash_password
 from app.models import AuditLog, AuthUser, Permiso, Rol, RolPermiso, Tenant
 from app.models.auth import AuthLoginChallenge, AuthPasswordResetToken, AuthRefreshSession, AuthTotpCredential
+from app.models.usuarios import Asignacion, Usuario
 
 
 @pytest.fixture
@@ -47,9 +48,11 @@ async def impersonation_app(valid_env):
         # TRUNCATE audit_log first (bypasses row-level trigger), then FK deps
         from sqlalchemy import text
         await session.execute(text("TRUNCATE TABLE audit_log"))
+        await session.execute(delete(Asignacion))
         await session.execute(delete(RolPermiso))
         await session.execute(delete(Permiso))
         await session.execute(delete(Rol))
+        await session.execute(delete(Usuario))
         await session.execute(delete(AuthPasswordResetToken))
         await session.execute(delete(AuthLoginChallenge))
         await session.execute(delete(AuthTotpCredential))

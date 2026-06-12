@@ -25,6 +25,7 @@ from app.core.security import create_access_token, hash_password
 from app.models import AuthLoginChallenge, AuthPasswordResetToken, AuthRefreshSession, AuthTotpCredential, AuthUser, Tenant
 from app.models.rbac import Permiso, Rol, RolPermiso
 from app.models.estructura import Carrera, Cohorte, Materia
+from app.models.usuarios import Asignacion, Usuario
 
 
 @pytest.fixture
@@ -50,12 +51,14 @@ async def estructura_app(valid_env):
     session_factory = get_session_factory()
 
     async with session_factory() as session:
+        await session.execute(delete(Asignacion))
         await session.execute(delete(Cohorte))
         await session.execute(delete(Carrera))
         await session.execute(delete(Materia))
         await session.execute(delete(RolPermiso))
         await session.execute(delete(Permiso))
         await session.execute(delete(Rol))
+        await session.execute(delete(Usuario))
         await session.execute(delete(AuthPasswordResetToken))
         await session.execute(delete(AuthLoginChallenge))
         await session.execute(delete(AuthTotpCredential))

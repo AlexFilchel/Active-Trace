@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 import uuid
 
-from sqlalchemy import delete
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import Base, get_session_factory, initialize_database
@@ -17,8 +17,10 @@ async def ensure_schema() -> None:
 
 
 async def clean_database(session: AsyncSession) -> None:
-    for table in reversed(Base.metadata.sorted_tables):
-        await session.execute(delete(table))
+    # TRUNCATE bypasses row-level triggers (e.g. audit_log's append-only trigger)
+    # CASCADE handles FK dependencies automatically
+    table_names = ", ".join(t.name for t in Base.metadata.sorted_tables)
+    await session.execute(text(f"TRUNCATE TABLE {table_names} RESTART IDENTITY CASCADE"))
     await session.commit()
 
 
