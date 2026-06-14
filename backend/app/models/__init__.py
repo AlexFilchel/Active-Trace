@@ -1,4 +1,5 @@
 from app.models.audit import AuditLog
+from app.models.avisos import AcknowledgmentAviso, Aviso
 from app.models.comunicacion import Comunicacion
 from app.models.auth import AuthLoginChallenge, AuthPasswordResetToken, AuthRefreshSession, AuthTotpCredential, AuthUser
 from app.models.base import Tenant, TenantScopedMixin, UuidLifecycleMixin
@@ -17,7 +18,9 @@ from app.models.rbac import Permiso, Rol, RolPermiso
 from app.models.usuarios import Asignacion, Usuario
 
 __all__ = [
+    "AcknowledgmentAviso",
     "AuditLog",
+    "Aviso",
     "CandidatoEvaluacion",
     "Comunicacion",
     "AuthLoginChallenge",
