@@ -5,12 +5,20 @@ from app.models.base import Tenant, TenantScopedMixin, UuidLifecycleMixin
 from app.models.calificacion import Calificacion, FinalizacionActividad, UmbralMateria
 from app.models.encuentros import Guardia, InstanciaEncuentro, SlotEncuentro
 from app.models.estructura import Carrera, Cohorte, Materia
+from app.models.evaluaciones import (
+    CandidatoEvaluacion,
+    DiaEvaluacion,
+    Evaluacion,
+    ReservaEvaluacion,
+    ResultadoEvaluacion,
+)
 from app.models.padron import EntradaPadron, VersionPadron
 from app.models.rbac import Permiso, Rol, RolPermiso
 from app.models.usuarios import Asignacion, Usuario
 
 __all__ = [
     "AuditLog",
+    "CandidatoEvaluacion",
     "Comunicacion",
     "AuthLoginChallenge",
     "AuthPasswordResetToken",
@@ -21,12 +29,16 @@ __all__ = [
     "Calificacion",
     "Carrera",
     "Cohorte",
+    "DiaEvaluacion",
     "EntradaPadron",
+    "Evaluacion",
     "FinalizacionActividad",
     "Guardia",
     "InstanciaEncuentro",
     "Materia",
     "Permiso",
+    "ReservaEvaluacion",
+    "ResultadoEvaluacion",
     "Rol",
     "RolPermiso",
     "SlotEncuentro",
