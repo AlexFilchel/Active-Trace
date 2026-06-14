@@ -15,6 +15,7 @@ from app.models.evaluaciones import (
 )
 from app.models.padron import EntradaPadron, VersionPadron
 from app.models.rbac import Permiso, Rol, RolPermiso
+from app.models.tareas import ComentarioTarea, Tarea
 from app.models.usuarios import Asignacion, Usuario
 
 __all__ = [
@@ -45,6 +46,8 @@ __all__ = [
     "Rol",
     "RolPermiso",
     "SlotEncuentro",
+    "ComentarioTarea",
+    "Tarea",
     "Tenant",
     "TenantScopedMixin",
     "UmbralMateria",
