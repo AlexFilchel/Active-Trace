@@ -14,6 +14,7 @@ from app.models.evaluaciones import (
     ResultadoEvaluacion,
 )
 from app.models.padron import EntradaPadron, VersionPadron
+from app.models.programas import FechaAcademica, ProgramaMateria
 from app.models.rbac import Permiso, Rol, RolPermiso
 from app.models.tareas import ComentarioTarea, Tarea
 from app.models.usuarios import Asignacion, Usuario
@@ -47,6 +48,8 @@ __all__ = [
     "RolPermiso",
     "SlotEncuentro",
     "ComentarioTarea",
+    "FechaAcademica",
+    "ProgramaMateria",
     "Tarea",
     "Tenant",
     "TenantScopedMixin",
