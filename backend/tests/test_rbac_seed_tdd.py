@@ -39,8 +39,10 @@ async def reset_full_state(database_url: str) -> None:
         await conn.exec_driver_sql("DROP TRIGGER IF EXISTS audit_log_immutable ON audit_log")
         await conn.exec_driver_sql("DROP FUNCTION IF EXISTS audit_log_immutable_fn")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS audit_log CASCADE")
+        await conn.exec_driver_sql("DROP TABLE IF EXISTS comunicacion CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS calificacion CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS umbral_materia CASCADE")
+        await conn.exec_driver_sql("DROP TABLE IF EXISTS finalizacion_actividad CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS entrada_padron CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS version_padron CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS asignacion CASCADE")
@@ -200,6 +202,25 @@ def test_rbac_seed_is_idempotent(valid_env):
     count_after_second = asyncio.run(count_roles(db_url))
 
     assert count_after_first == count_after_second
+
+
+def test_reset_full_state_removes_finalizacion_actividad(valid_env):
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    db_url = settings.database_url.unicode_string()
+    config = build_alembic_config(db_url)
+
+    asyncio.run(reset_full_state(db_url))
+    command.upgrade(config, "head")
+
+    meta_before_reset = asyncio.run(inspect_tables(db_url))
+    assert "finalizacion_actividad" in meta_before_reset["tables"]
+
+    asyncio.run(reset_full_state(db_url))
+
+    meta_after_reset = asyncio.run(inspect_tables(db_url))
+    assert "finalizacion_actividad" not in meta_after_reset["tables"]
 
 
 def test_rbac_migration_downgrade_drops_tables(valid_env):

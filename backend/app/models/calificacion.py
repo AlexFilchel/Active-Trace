@@ -26,6 +26,18 @@ class Calificacion(TenantScopedMixin, Base):
     origen: Mapped[str] = mapped_column(String(50), nullable=False, default="Importado")
 
 
+class FinalizacionActividad(TenantScopedMixin, Base):
+    __tablename__ = "finalizacion_actividad"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "entrada_padron_id", "actividad", name="uq_finalizacion_actividad_entrada"),
+    )
+
+    entrada_padron_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("entrada_padron.id", ondelete="CASCADE"), nullable=False, index=True)
+    actividad: Mapped[str] = mapped_column(String(300), nullable=False)
+    es_textual: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    finalizado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
 class UmbralMateria(TenantScopedMixin, Base):
     __tablename__ = "umbral_materia"
     __table_args__ = (

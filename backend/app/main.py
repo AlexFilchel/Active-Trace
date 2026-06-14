@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.v1.routers.auth import router as auth_router
+from app.api.v1.routers.comunicaciones import router as comunicaciones_router
+from app.api.v1.routers.analisis import router as analisis_router
 from app.api.v1.routers.calificaciones import router as calificaciones_router
 from app.api.v1.routers.equipos import router as equipos_router
 from app.api.v1.routers.estructura import router as estructura_router
@@ -39,6 +41,8 @@ def create_app() -> FastAPI:
     app.include_router(equipos_router)
     app.include_router(padron_router)
     app.include_router(calificaciones_router)
+    app.include_router(analisis_router)
+    app.include_router(comunicaciones_router)
     configure_observability(app, settings)
     return app
 

@@ -1,4 +1,4 @@
-"""TDD: 007_calificaciones migration — creates calificacion + umbral_materia, downgrade removes them."""
+"""TDD: calificaciones/finalizacion migrations — creates analysis tables and downgrades cleanly."""
 from __future__ import annotations
 
 import asyncio
@@ -26,6 +26,8 @@ async def reset_cal_migration_state(database_url: str) -> None:
     engine = create_async_engine(database_url)
 
     async with engine.begin() as conn:
+        await conn.exec_driver_sql("DROP TABLE IF EXISTS comunicacion CASCADE")
+        await conn.exec_driver_sql("DROP TABLE IF EXISTS finalizacion_actividad CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS calificacion CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS umbral_materia CASCADE")
         await conn.exec_driver_sql("DROP TABLE IF EXISTS entrada_padron CASCADE")
@@ -73,6 +75,7 @@ def test_007_calificaciones_creates_calificacion_and_umbral_materia(valid_env):
 
     tables = asyncio.run(get_tables(settings.database_url.unicode_string()))
     assert "calificacion" in tables
+    assert "finalizacion_actividad" in tables
     assert "umbral_materia" in tables
 
 
@@ -88,6 +91,7 @@ def test_007_calificaciones_downgrade_removes_calificacion_and_umbral_materia(va
 
     tables = asyncio.run(get_tables(settings.database_url.unicode_string()))
     assert "calificacion" not in tables
+    assert "finalizacion_actividad" not in tables
     assert "umbral_materia" not in tables
     assert "entrada_padron" in tables
 

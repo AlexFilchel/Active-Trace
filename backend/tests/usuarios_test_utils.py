@@ -16,6 +16,8 @@ async def ensure_schema() -> None:
         await conn.run_sync(Base.metadata.create_all)
         # Apply additive column migrations for columns added after initial create_all
         _ADDITIVE_COLUMNS = [
+            "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS comunicaciones_aprobacion_requerida BOOLEAN",
+            "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS comunicaciones_aprobacion_masiva BOOLEAN",
             "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_url VARCHAR(500)",
             "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_token_encrypted VARCHAR(512)",
         ]

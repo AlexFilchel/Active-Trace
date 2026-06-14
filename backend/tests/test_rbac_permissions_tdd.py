@@ -8,43 +8,25 @@ Covers:
 """
 from __future__ import annotations
 
+from datetime import date
 import pytest
-from sqlalchemy import delete
 
 from app.core.database import get_session_factory, initialize_database
+from app.core.security import encrypt_value, hash_password
 from app.core.permissions import get_user_permissions
-from app.models import AuthLoginChallenge, AuthPasswordResetToken, AuthRefreshSession, AuthTotpCredential, AuthUser, Permiso, Rol, RolPermiso, Tenant
+from app.models import Asignacion, AuthLoginChallenge, AuthPasswordResetToken, AuthRefreshSession, AuthTotpCredential, AuthUser, Carrera, Cohorte, Materia, Permiso, Rol, RolPermiso, Tenant, Usuario
+from tests.usuarios_test_utils import clean_database, ensure_schema
 
 
 @pytest.fixture
 async def permissions_db_session(valid_env):
-    engine = initialize_database()
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Tenant.__table__.create, checkfirst=True)
-        await conn.run_sync(AuthUser.__table__.create, checkfirst=True)
-        await conn.run_sync(AuthRefreshSession.__table__.create, checkfirst=True)
-        await conn.run_sync(AuthTotpCredential.__table__.create, checkfirst=True)
-        await conn.run_sync(AuthLoginChallenge.__table__.create, checkfirst=True)
-        await conn.run_sync(AuthPasswordResetToken.__table__.create, checkfirst=True)
-        await conn.run_sync(Rol.__table__.create, checkfirst=True)
-        await conn.run_sync(Permiso.__table__.create, checkfirst=True)
-        await conn.run_sync(RolPermiso.__table__.create, checkfirst=True)
+    initialize_database()
+    await ensure_schema()
 
     session_factory = get_session_factory()
 
     async with session_factory() as session:
-        # Clean up in FK order
-        await session.execute(delete(RolPermiso))
-        await session.execute(delete(Permiso))
-        await session.execute(delete(Rol))
-        await session.execute(delete(AuthPasswordResetToken))
-        await session.execute(delete(AuthLoginChallenge))
-        await session.execute(delete(AuthTotpCredential))
-        await session.execute(delete(AuthRefreshSession))
-        await session.execute(delete(AuthUser))
-        await session.execute(delete(Tenant))
-        await session.commit()
+        await clean_database(session)
 
         tenant_a = Tenant(name="Permissions Tenant A", slug="perms-tenant-a")
         tenant_b = Tenant(name="Permissions Tenant B", slug="perms-tenant-b")
@@ -135,3 +117,119 @@ async def test_permisos_de_tenant_a_no_se_filtran_en_tenant_b(permissions_db_ses
     # Same rol name ADMIN queried against tenant A returns empty (no ADMIN in tenant A fixture)
     permisos_admin_a = await get_user_permissions(["ADMIN"], tenant_a.id, session)
     assert permisos_admin_a == set()
+
+
+@pytest.mark.asyncio
+async def test_usuario_con_asignacion_activa_suma_permiso(permissions_db_session):
+    session, tenant_a, _tenant_b = permissions_db_session
+
+    auth_user = AuthUser(
+        tenant_id=tenant_a.id,
+        email="docente@tenant-a.local",
+        password_hash=hash_password("P1!"),
+        roles=[],
+    )
+    rol_tutor = Rol(tenant_id=tenant_a.id, nombre="TUTOR_ASIGNADO")
+    permiso_tutor = Permiso(tenant_id=tenant_a.id, nombre="comunicacion:aprobar")
+    carrera = Carrera(tenant_id=tenant_a.id, codigo="CAR-RBAC-A", nombre="Carrera RBAC")
+    materia = Materia(tenant_id=tenant_a.id, codigo="MAT-RBAC-A", nombre="Materia RBAC")
+    session.add_all([auth_user, rol_tutor, permiso_tutor, carrera, materia])
+    await session.flush()
+
+    cohorte = Cohorte(
+        tenant_id=tenant_a.id,
+        carrera_id=carrera.id,
+        nombre="2026",
+        anio=2026,
+        vig_desde=date(2026, 1, 1),
+    )
+    session.add(cohorte)
+    await session.flush()
+
+    usuario = Usuario(
+        tenant_id=tenant_a.id,
+        auth_user_id=auth_user.id,
+        nombre="Docente",
+        apellidos="Asignado",
+        email_encrypted=encrypt_value("docente@tenant-a.local"),
+        email_hash="hash-docente-a",
+    )
+    session.add(usuario)
+    await session.flush()
+
+    session.add_all([
+        RolPermiso(tenant_id=tenant_a.id, rol_id=rol_tutor.id, permiso_id=permiso_tutor.id),
+        Asignacion(
+            tenant_id=tenant_a.id,
+            usuario_id=usuario.id,
+            rol_id=rol_tutor.id,
+            materia_id=materia.id,
+            cohorte_id=cohorte.id,
+            desde=date.today(),
+            hasta=None,
+            comisiones=["A"],
+        ),
+    ])
+    await session.commit()
+
+    permisos = await get_user_permissions([], tenant_a.id, session, auth_user_id=auth_user.id)
+
+    assert permisos == {"comunicacion:aprobar"}
+
+
+@pytest.mark.asyncio
+async def test_resolucion_repetida_de_asignaciones_permanece_estable(permissions_db_session):
+    session, tenant_a, _tenant_b = permissions_db_session
+
+    auth_user = AuthUser(
+        tenant_id=tenant_a.id,
+        email="coord@tenant-a.local",
+        password_hash=hash_password("P1!"),
+        roles=["COORDINADOR"],
+    )
+    rol = Rol(tenant_id=tenant_a.id, nombre="COORDINADOR_ASIGNADO")
+    permiso = Permiso(tenant_id=tenant_a.id, nombre="comunicacion:monitorear")
+    carrera = Carrera(tenant_id=tenant_a.id, codigo="CAR-RBAC-B", nombre="Carrera RBAC B")
+    materia = Materia(tenant_id=tenant_a.id, codigo="MAT-RBAC-B", nombre="Materia RBAC B")
+    session.add_all([auth_user, rol, permiso, carrera, materia])
+    await session.flush()
+
+    cohorte = Cohorte(
+        tenant_id=tenant_a.id,
+        carrera_id=carrera.id,
+        nombre="2027",
+        anio=2027,
+        vig_desde=date(2027, 1, 1),
+    )
+    session.add(cohorte)
+    await session.flush()
+
+    usuario = Usuario(
+        tenant_id=tenant_a.id,
+        auth_user_id=auth_user.id,
+        nombre="Coord",
+        apellidos="Activo",
+        email_encrypted=encrypt_value("coord@tenant-a.local"),
+        email_hash="hash-coord-a",
+    )
+    session.add(usuario)
+    await session.flush()
+
+    session.add_all([
+        RolPermiso(tenant_id=tenant_a.id, rol_id=rol.id, permiso_id=permiso.id),
+        Asignacion(
+            tenant_id=tenant_a.id,
+            usuario_id=usuario.id,
+            rol_id=rol.id,
+            materia_id=materia.id,
+            cohorte_id=cohorte.id,
+            desde=date.today(),
+            hasta=None,
+            comisiones=["B"],
+        ),
+    ])
+    await session.commit()
+
+    for _ in range(5):
+        permisos = await get_user_permissions([], tenant_a.id, session, auth_user_id=auth_user.id)
+        assert permisos == {"comunicacion:monitorear"}

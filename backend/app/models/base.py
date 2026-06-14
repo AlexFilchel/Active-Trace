@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
@@ -43,5 +43,7 @@ class Tenant(UuidLifecycleMixin, Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(120), nullable=False, unique=True, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    comunicaciones_aprobacion_requerida: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=None)
+    comunicaciones_aprobacion_masiva: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=None)
     moodle_ws_url: Mapped[str | None] = mapped_column(String(500), nullable=True, default=None)
     moodle_ws_token_encrypted: Mapped[str | None] = mapped_column(String(512), nullable=True, default=None)

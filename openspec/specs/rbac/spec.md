@@ -1,3 +1,6 @@
+## Purpose
+Definir el catálogo RBAC multi-tenant, la resolución server-side de permisos efectivos y el enforcement fail-closed de permisos finos.
+## Requirements
 ### Requirement: Catálogo de roles por tenant
 El sistema SHALL mantener una tabla `Rol` por tenant con campos: `id` (UUID), `tenant_id`, `nombre` (string), `descripcion` (string, opcional), más los campos de auditoría del `TenantScopedMixin` (created_at, updated_at, deleted_at). La unicidad de `(tenant_id, nombre)` SHALL ser enforceada a nivel DB.
 
@@ -96,3 +99,23 @@ El sistema SHALL garantizar que la resolución de permisos de un usuario de un t
 #### Scenario: Roles de tenant A no otorgan permisos en tenant B
 - **WHEN** un usuario del tenant A tiene el rol ADMIN (con todos sus permisos)
 - **THEN** si ese mismo usuario intenta acceder a un endpoint del tenant B, sus permisos se resuelven con los roles de tenant B (no de A), resultando en 403 si el tenant B no tiene ese usuario/rol
+
+### Requirement: Permisos de comunicaciones salientes
+El sistema SHALL incorporar permisos finos para comunicaciones salientes al catálogo RBAC por tenant.
+
+- `comunicacion:enviar` MUST proteger preview, enqueue, cancelación permitida y consulta operativa de comunicaciones.
+- `comunicacion:aprobar` MUST proteger aprobación por lote e individual.
+- La semilla de permisos MUST ser idempotente y scoped por tenant.
+
+#### Scenario: Permiso comunicacion enviar existe por tenant
+- **WHEN** se ejecuta la migración/seed de C-12 en un tenant existente
+- **THEN** el catálogo del tenant contiene `comunicacion:enviar` sin duplicados
+
+#### Scenario: Permiso comunicacion aprobar existe por tenant
+- **WHEN** se ejecuta la migración/seed de C-12 en un tenant existente
+- **THEN** el catálogo del tenant contiene `comunicacion:aprobar` sin duplicados
+
+#### Scenario: Endpoint de aprobación falla cerrado
+- **WHEN** un usuario no posee `comunicacion:aprobar` y llama a aprobar lote
+- **THEN** el sistema retorna HTTP 403 y no modifica comunicaciones
+
