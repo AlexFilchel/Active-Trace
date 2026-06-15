@@ -6,6 +6,14 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class ActividadItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    nombre: str
+    tipo: str  # "numerica" | "textual"
+
+
 class PreviewResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

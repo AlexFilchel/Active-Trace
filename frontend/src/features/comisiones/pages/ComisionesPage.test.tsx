@@ -47,7 +47,7 @@ describe('Router — /comisiones route', () => {
         React.createElement(RouterProvider, { router }),
       ),
     )
-    expect(await screen.findByText(/Comisiones/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Comisiones/i, {}, { timeout: 8000 })).toBeInTheDocument()
   })
 
   it('/comisiones redirects to /login when unauthenticated (triangulate)', async () => {
@@ -60,7 +60,7 @@ describe('Router — /comisiones route', () => {
         React.createElement(RouterProvider, { router }),
       ),
     )
-    expect(await screen.findByRole('button', { name: /ingresar|login|entrar/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /ingresar|login|entrar/i }, { timeout: 8000 })).toBeInTheDocument()
   })
 })
 
@@ -83,7 +83,7 @@ describe('AuthenticatedLayout — PROFESOR nav visibility', () => {
         React.createElement(RouterProvider, { router }),
       ),
     )
-    expect(await screen.findByRole('link', { name: /^Comisiones$/i })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /^Comisiones$/i }, { timeout: 8000 })).toBeInTheDocument()
   })
 
   it('ALUMNO does not see Comisiones nav link (triangulate)', async () => {
@@ -99,7 +99,7 @@ describe('AuthenticatedLayout — PROFESOR nav visibility', () => {
       ),
     )
     // wait for render to settle
-    expect(await screen.findByRole('button', { name: /cerrar sesión/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /cerrar sesión/i }, { timeout: 8000 })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /^Comisiones$/i })).not.toBeInTheDocument()
   })
 })

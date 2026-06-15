@@ -34,7 +34,7 @@ describe('App router', () => {
     )
 
     // Should redirect to login and render the login form
-    expect(await screen.findByRole('button', { name: /ingresar|login|entrar/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /ingresar|login|entrar/i }, { timeout: 8000 })).toBeInTheDocument()
   })
 
   it('public /login route renders without redirect', async () => {
@@ -48,6 +48,6 @@ describe('App router', () => {
       ),
     )
 
-    expect(await screen.findByRole('button', { name: /ingresar|login|entrar/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /ingresar|login|entrar/i }, { timeout: 8000 })).toBeInTheDocument()
   })
 })

@@ -10,8 +10,11 @@ interface NavEntry {
 
 const NAV_ENTRIES: NavEntry[] = [
   { label: 'Dashboard', path: '/dashboard', roles: [] },
-  { label: 'Alumnos', path: '/alumnos', roles: ['COORDINADOR', 'ADMIN', 'NEXO', 'TUTOR', 'PROFESOR'] },
   { label: 'Comisiones', path: '/comisiones', roles: ['COORDINADOR', 'ADMIN', 'PROFESOR'] },
+  { label: 'Monitores', path: '/monitores', roles: ['COORDINADOR', 'ADMIN', 'TUTOR', 'PROFESOR'] },
+  { label: 'Equipos', path: '/equipos', roles: ['COORDINADOR', 'ADMIN'] },
+  { label: 'Avisos', path: '/avisos', roles: ['COORDINADOR', 'ADMIN'] },
+  { label: 'Tareas', path: '/tareas', roles: ['COORDINADOR', 'ADMIN'] },
   { label: 'Liquidaciones', path: '/liquidaciones', roles: ['FINANZAS', 'ADMIN'] },
   { label: 'Administración', path: '/admin', roles: ['ADMIN'] },
 ]

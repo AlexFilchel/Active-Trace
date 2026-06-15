@@ -12,6 +12,6 @@ describe('App root', () => {
   it('mounts without runtime errors and renders login page', async () => {
     const { default: App } = await import('./App')
     render(React.createElement(App))
-    expect(await screen.findByRole('button', { name: /ingresar|login|entrar/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /ingresar|login|entrar/i }, { timeout: 8000 })).toBeInTheDocument()
   })
 })

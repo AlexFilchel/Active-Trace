@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import AuthenticatedUser, get_db
 from app.core.permissions import require_permission
 from app.schemas.calificaciones import (
+    ActividadItem,
     ImportarRequest,
     ImportarResponse,
     PreviewResponse,
@@ -17,6 +18,9 @@ from app.schemas.calificaciones import (
     UmbralResponse,
     VaciadoResponse,
 )
+from sqlalchemy import distinct, select, text
+from app.models.calificacion import Calificacion, FinalizacionActividad
+from app.models.padron import EntradaPadron, VersionPadron
 from app.services.calificacion_service import CalificacionError, CalificacionService, UmbralService
 
 router = APIRouter(prefix="/api/calificaciones", tags=["calificaciones"])
@@ -32,6 +36,42 @@ def _build_service(user: AuthenticatedUser, db: AsyncSession) -> CalificacionSer
 
 def _build_umbral_service(user: AuthenticatedUser, db: AsyncSession) -> UmbralService:
     return UmbralService(session=db, tenant_id=user.tenant_id)
+
+
+@router.get("/actividades", response_model=list[ActividadItem])
+async def get_actividades(
+    comision_id: uuid.UUID = Query(..., description="ID de la materia/comisión"),
+    user: RequiereCalificaciones = None,
+    db: AsyncSession = Depends(get_db),
+) -> list[ActividadItem]:
+    """Devuelve las actividades ya importadas para una materia, con su tipo."""
+    # Actividades numéricas
+    stmt_num = (
+        select(distinct(Calificacion.actividad))
+        .join(EntradaPadron, EntradaPadron.id == Calificacion.entrada_padron_id)
+        .join(VersionPadron, VersionPadron.id == EntradaPadron.version_id)
+        .where(Calificacion.tenant_id == user.tenant_id)
+        .where(VersionPadron.materia_id == comision_id)
+        .where(Calificacion.nota_numerica.isnot(None))
+    )
+    stmt_txt = (
+        select(distinct(Calificacion.actividad))
+        .join(EntradaPadron, EntradaPadron.id == Calificacion.entrada_padron_id)
+        .join(VersionPadron, VersionPadron.id == EntradaPadron.version_id)
+        .where(Calificacion.tenant_id == user.tenant_id)
+        .where(VersionPadron.materia_id == comision_id)
+        .where(Calificacion.nota_textual.isnot(None))
+    )
+    num_result = await db.execute(stmt_num)
+    txt_result = await db.execute(stmt_txt)
+    numericas = {r[0] for r in num_result.fetchall()}
+    textuales = {r[0] for r in txt_result.fetchall()}
+    items: list[ActividadItem] = []
+    for nombre in sorted(numericas):
+        items.append(ActividadItem(id=nombre, nombre=nombre, tipo="numerica"))
+    for nombre in sorted(textuales - numericas):
+        items.append(ActividadItem(id=nombre, nombre=nombre, tipo="textual"))
+    return items
 
 
 @router.post("/preview", response_model=PreviewResponse)
