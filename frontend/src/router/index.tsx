@@ -7,6 +7,9 @@ const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
 const TwoFactorPage = lazy(() => import('@/features/auth/pages/TwoFactorPage'))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPasswordPage'))
+const ComisionesPage = lazy(() =>
+  import('@/features/comisiones/pages/ComisionesPage').then((m) => ({ default: m.ComisionesPage })),
+)
 
 function withSuspense(Component: React.ComponentType) {
   return (
@@ -41,6 +44,10 @@ const routes = [
             <p className="mt-2 text-gray-500">Bienvenido a trace. Las secciones estarán disponibles próximamente.</p>
           </div>
         ),
+      },
+      {
+        path: 'comisiones',
+        element: withSuspense(ComisionesPage),
       },
       {
         path: '*',
