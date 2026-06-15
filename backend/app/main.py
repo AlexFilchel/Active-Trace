@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.routers.auth import router as auth_router
 from app.api.v1.routers.avisos import router as avisos_router
@@ -43,6 +44,15 @@ def create_app() -> FastAPI:
     initialize_database()
 
     app = FastAPI(title="activia-trace", lifespan=lifespan)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173", "http://localhost:4173"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.state.login_rate_limiter = InMemoryLoginRateLimiter()
     app.state.recovery_delivery = NullRecoveryDelivery()
     app.include_router(health_router)
