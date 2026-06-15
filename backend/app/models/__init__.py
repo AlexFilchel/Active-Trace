@@ -1,4 +1,5 @@
 from app.models.audit import AuditLog
+from app.models.mensajeria import HiloMensaje, MensajeInterno
 from app.models.avisos import AcknowledgmentAviso, Aviso
 from app.models.comunicacion import Comunicacion
 from app.models.auth import AuthLoginChallenge, AuthPasswordResetToken, AuthRefreshSession, AuthTotpCredential, AuthUser
@@ -44,7 +45,9 @@ __all__ = [
     "Evaluacion",
     "FinalizacionActividad",
     "Guardia",
+    "HiloMensaje",
     "InstanciaEncuentro",
+    "MensajeInterno",
     "Materia",
     "Permiso",
     "ReservaEvaluacion",
