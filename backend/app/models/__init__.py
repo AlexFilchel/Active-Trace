@@ -13,6 +13,7 @@ from app.models.evaluaciones import (
     ReservaEvaluacion,
     ResultadoEvaluacion,
 )
+from app.models.liquidaciones import Factura, Liquidacion, SalarioBase, SalarioPlus
 from app.models.padron import EntradaPadron, VersionPadron
 from app.models.programas import FechaAcademica, ProgramaMateria
 from app.models.rbac import Permiso, Rol, RolPermiso
@@ -36,6 +37,10 @@ __all__ = [
     "Cohorte",
     "DiaEvaluacion",
     "EntradaPadron",
+    "Factura",
+    "Liquidacion",
+    "SalarioBase",
+    "SalarioPlus",
     "Evaluacion",
     "FinalizacionActividad",
     "Guardia",

@@ -18,30 +18,15 @@
 
 ---
 
-### PA-22 — ¿Cuántas claves de Plus existen y cómo se mapean a materias?
+### ~~PA-22~~ — CERRADA (C-18)
 
-El modelo de liquidación define un **Plus** por combinación `(clave, rol)`, donde la clave agrupa familias de materias (ej.: `PROG` para materias de Programación). Ver [RN-31](05_reglas_de_negocio.md#rn-31) a [RN-38](05_reglas_de_negocio.md#rn-38).
-
-**Preguntas abiertas**:
-
-- ¿Cuáles son todas las claves de Plus que existen en el dominio (ej.: `PROG`, `BD`, `ING`, `MAT`, etc.)?
-- ¿Qué materia cae en qué clave? ¿Hay materias sin clave asignada?
-- ¿Ese mapeo es configurable por tenant o está fijo para toda la plataforma?
-- ¿Lo define el ADMIN del tenant o viene preconfigurado desde la institución?
+**Resolución**: La clave de Plus es un campo `categoria_plus: str | None` en la tabla `materia`. Lo define el ADMIN/FINANZAS del tenant al crear o editar una materia. Las claves son texto libre por tenant (no hay catálogo global fijo); cualquier valor que coincida con una `clave` en la grilla `PlusSalarial` activa el Plus. Materia sin `categoria_plus` no genera Plus. Ver `openspec/changes/archive/2026-06-14-c-18-liquidaciones-y-honorarios/design.md`.
 
 ---
 
-### PA-23 — ¿Cómo se calcula el Plus cuando un docente tiene N comisiones de la misma clave?
+### ~~PA-23~~ — CERRADA por RN-33 y RN-34 (C-18)
 
-Si un PROFESOR tiene tres comisiones de materias que caen bajo la clave `PROG`:
-
-**Preguntas abiertas**:
-
-- ¿Se acumula `3 × Plus(PROG, PROFESOR)` o se aplica una sola vez sin importar la cantidad de comisiones?
-- ¿Existe un tope de acumulación?
-- ¿La lógica cambia según el rol (TUTOR vs. PROFESOR vs. COORDINADOR)?
-
-**Impacto**: es la regla de negocio central del módulo de liquidaciones. Sin ella no se puede implementar el cálculo.
+**Resolución**: La acumulación es **N × Plus(categoría, rol)**, sin tope, idéntica para todos los roles. Lo que varía entre roles no es la lógica sino el valor del Plus en la grilla salarial. Esta decisión ya estaba implícita en RN-33 ("acumula N veces el plus correspondiente") y RN-34 (fórmula explícita con `× N_comisiones`). Ver [RN-33](05_reglas_de_negocio.md#rn-33) y [RN-34](05_reglas_de_negocio.md#rn-34).
 
 ---
 
@@ -223,6 +208,8 @@ Las siguientes preguntas que existían en versiones anteriores de este documento
 | PA-04 | Login por email + contraseña; 2FA opcional (TOTP); recuperación por token de un solo uso; alta solo administrativa en MVP | [07_flujos_principales.md](07_flujos_principales.md), [`docs/ARQUITECTURA.md` §5.1](../docs/ARQUITECTURA.md) |
 | PA-06 | Fórmula de liquidación: Base (por rol) + Plus (por clave × rol); ver RN-31 a RN-38 | [05_reglas_de_negocio.md](05_reglas_de_negocio.md) |
 | PA-21 | Impersonación via parámetro de petición: eliminada. La impersonación legítima requiere permiso explícito, sesión diferenciada y auditoría completa | [03_actores_y_roles.md §4](03_actores_y_roles.md), [`docs/ARQUITECTURA.md`](../docs/ARQUITECTURA.md) |
+| PA-22 | `categoria_plus: str\|None` en `Materia`; texto libre por tenant; coincidencia con clave en grilla activa el Plus | [05_reglas_de_negocio.md RN-33](05_reglas_de_negocio.md#rn-33), design.md de C-18 |
+| PA-23 | Acumulación N × Plus, sin tope, misma fórmula para todos los roles | [RN-33](05_reglas_de_negocio.md#rn-33), [RN-34](05_reglas_de_negocio.md#rn-34) |
 
 ---
 

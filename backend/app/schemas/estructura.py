@@ -101,6 +101,7 @@ class MateriaUpdate(BaseModel):
 
     nombre: str | None = Field(default=None, max_length=200)
     estado: EstadoMateria | None = None
+    categoria_plus: str | None = Field(default=None, max_length=50)
 
 
 class MateriaResponse(BaseModel):
@@ -111,5 +112,6 @@ class MateriaResponse(BaseModel):
     codigo: str
     nombre: str
     estado: str
+    categoria_plus: str | None
     created_at: datetime
     updated_at: datetime

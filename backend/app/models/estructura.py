@@ -65,3 +65,4 @@ class Materia(TenantScopedMixin, Base):
     codigo: Mapped[str] = mapped_column(String(50), nullable=False)
     nombre: Mapped[str] = mapped_column(String(200), nullable=False)
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="Activa")
+    categoria_plus: Mapped[str | None] = mapped_column(String(50), nullable=True)

@@ -20,6 +20,7 @@ async def ensure_schema() -> None:
             "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS comunicaciones_aprobacion_masiva BOOLEAN",
             "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_url VARCHAR(500)",
             "ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_token_encrypted VARCHAR(512)",
+            "ALTER TABLE materia ADD COLUMN IF NOT EXISTS categoria_plus VARCHAR(50)",
         ]
         for stmt in _ADDITIVE_COLUMNS:
             await conn.execute(text(stmt))

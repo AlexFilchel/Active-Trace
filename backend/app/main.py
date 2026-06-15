@@ -5,6 +5,9 @@ from fastapi import FastAPI
 from app.api.v1.routers.auth import router as auth_router
 from app.api.v1.routers.avisos import router as avisos_router
 from app.api.v1.routers.auditoria import router as auditoria_router
+from app.api.v1.routers.facturas import router as facturas_router
+from app.api.v1.routers.liquidaciones import router as liquidaciones_router
+from app.api.v1.routers.salarios import router as salarios_router
 from app.api.v1.routers.programas import fechas_router, programas_router
 from app.api.v1.routers.tareas import router as tareas_router
 from app.api.v1.routers.coloquios import router as coloquios_router
@@ -58,6 +61,9 @@ def create_app() -> FastAPI:
     app.include_router(programas_router)
     app.include_router(fechas_router)
     app.include_router(auditoria_router)
+    app.include_router(salarios_router)
+    app.include_router(liquidaciones_router)
+    app.include_router(facturas_router)
     configure_observability(app, settings)
     return app
 
