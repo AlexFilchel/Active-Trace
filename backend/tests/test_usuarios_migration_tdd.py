@@ -22,33 +22,16 @@ def build_alembic_config(database_url: str) -> Config:
 
 async def reset_state(database_url: str) -> None:
     from app.core.database import dispose_database
+    from sqlalchemy import text
 
     await dispose_database()
     engine = create_async_engine(database_url)
     async with engine.begin() as conn:
-        for table_name in [
-            "calificacion",
-            "umbral_materia",
-            "entrada_padron",
-            "version_padron",
-            "asignacion",
-            "usuario",
-            "audit_log",
-            "cohorte",
-            "carrera",
-            "materia",
-            "rol_permiso",
-            "permiso",
-            "rol",
-            "auth_password_reset_token",
-            "auth_login_challenge",
-            "auth_totp_credential",
-            "auth_refresh_session",
-            "auth_user",
-            "alembic_version",
-            "tenant",
-        ]:
-            await conn.exec_driver_sql(f"DROP TABLE IF EXISTS {table_name} CASCADE")
+        await conn.exec_driver_sql("DROP TRIGGER IF EXISTS audit_log_immutable ON audit_log")
+        await conn.exec_driver_sql("DROP FUNCTION IF EXISTS audit_log_immutable_fn CASCADE")
+        result = await conn.execute(text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'"))
+        for (table,) in result.fetchall():
+            await conn.exec_driver_sql(f'DROP TABLE IF EXISTS "{table}" CASCADE')
     await engine.dispose()
 
 

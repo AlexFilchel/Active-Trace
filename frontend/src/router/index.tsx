@@ -1,4 +1,5 @@
-import { lazy, Suspense, useMemo } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, createMemoryRouter, Navigate } from 'react-router-dom'
 import { RequireAuth } from './guards'
 import AuthenticatedLayout from '@/shared/components/AuthenticatedLayout'

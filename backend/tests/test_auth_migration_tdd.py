@@ -40,34 +40,17 @@ async def inspect_auth_database(database_url: str) -> dict[str, object]:
 
 async def reset_auth_migration_state(database_url: str) -> None:
     from app.core.database import dispose_database
+    from sqlalchemy import text
 
     await dispose_database()
     engine = create_async_engine(database_url)
-
-    async with engine.begin() as connection:
-        await connection.exec_driver_sql("DROP TRIGGER IF EXISTS audit_log_immutable ON audit_log")
-        await connection.exec_driver_sql("DROP FUNCTION IF EXISTS audit_log_immutable_fn")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS audit_log CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS comunicacion CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS calificacion CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS umbral_materia CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS entrada_padron CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS version_padron CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS asignacion CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS usuario CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS cohorte CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS carrera CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS materia CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS rol_permiso CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS permiso CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS rol CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS auth_password_reset_token CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS auth_login_challenge CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS auth_totp_credential CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS auth_refresh_session CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS auth_user CASCADE")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS alembic_version")
-        await connection.exec_driver_sql("DROP TABLE IF EXISTS tenant CASCADE")
+    async with engine.begin() as conn:
+        await conn.exec_driver_sql("DROP TRIGGER IF EXISTS audit_log_immutable ON audit_log")
+        await conn.exec_driver_sql("DROP FUNCTION IF EXISTS audit_log_immutable_fn CASCADE")
+        result = await conn.execute(text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'"))
+        for (table,) in result.fetchall():
+            await conn.exec_driver_sql(f'DROP TABLE IF EXISTS "{table}" CASCADE')
+    await engine.dispose()
 
     await engine.dispose()
 

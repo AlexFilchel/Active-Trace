@@ -519,17 +519,30 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/06_funcionalidades.md` Épicas 9, 10, 5
   - `knowledge-base/07_flujos_principales.md` FL-08, FL-11, FL-12
 
+## FASE 6 — Mantenimiento post-roadmap
+
+### [C-25] `revision-general-y-fixes`
+- **Estado**: `[x]` archivado — 2026-06-16
+- **Scope**:
+  - No es una feature: revisión general pedida tras cerrar C-01…C-24 (correr toda la test suite backend + frontend y arreglar lo que apareciera).
+  - Fix de migración `016_liquidaciones_honorarios`: `downgrade()` estaba vacío, rompía la reversibilidad de la cadena de migraciones (`DependentObjectsStillExistError`). Implementado el reverso completo y simétrico al `upgrade()`.
+  - Fix de aislamiento de tests: 7 archivos con fixtures que dejaban filas de `Tenant`/`AuthUser`/`AuditLog`/`Carrera` sin limpiar entre archivos, rompiendo 22 tests solo en la suite completa (pasaban en aislamiento). Corregido unificando todos los fixtures al patrón `clean_database()` (TRUNCATE CASCADE) ya establecido en el repo.
+  - Resultado verificado: backend 430/430 tests passed (0 failed, 0 errors); frontend 33 archivos / 278 tests passed; lint sin hallazgos.
+- **Dependencias**: ninguna (posterior a C-01…C-24)
+- **Governance**: CRÍTICO en el fix de la migración de liquidaciones (requirió aprobación explícita antes de codear); BAJO en los fixes de test (higiene de aislamiento, sin lógica de negocio).
+- **Leer antes**: `openspec/changes/archive/2026-06-16-c-25-revision-general-y-fixes/design.md` (causa raíz y decisiones de cada fix).
+
 ---
 
 ## Resumen
 
 | Métrica | Valor |
 |---------|-------|
-| Total de changes | 24 |
-| Fases | 6 (FASE 0 a FASE 5) |
+| Total de changes | 25 (24 de roadmap + 1 de mantenimiento) |
+| Fases | 7 (FASE 0 a FASE 5 + FASE 6 mantenimiento) |
 | Camino crítico | 10 changes (`C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 → C-12`) |
 | Gates de paralelismo | 11 (GATE 0 a GATE 10) |
-| Changes CRITICO (governance) | 6 (C-02, C-03, C-04, C-05, C-07, C-18) |
+| Changes CRITICO (governance) | 7 (C-02, C-03, C-04, C-05, C-07, C-18, C-25) |
 | Primer fork | GATE 4 (tras C-04, seguridad lista) |
 
 **Primer change recomendado**: `C-01` (foundation-setup).

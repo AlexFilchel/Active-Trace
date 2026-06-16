@@ -97,13 +97,16 @@ async def ctx(valid_env):
     app = FastAPI()
     app.include_router(router)
 
-    return {
+    yield {
         "app": app,
         "tok_admin": _tok(admin_id, tenant_a.id, ["ADMIN"]),
         "tok_coord": _tok(coord_id, tenant_a.id, ["COORDINADOR"]),
         "admin_id": admin_id,
         "coord_id": coord_id,
     }
+
+    async with sf() as s:
+        await clean_database(s)
 
 
 # ---------------------------------------------------------------------------

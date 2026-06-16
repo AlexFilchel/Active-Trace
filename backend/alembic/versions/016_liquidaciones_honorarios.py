@@ -144,4 +144,30 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    pass
+    conn = op.get_bind()
+    permiso_nombres = [nombre for nombre, _ in _PERMISOS]
+
+    conn.execute(
+        sa.text(
+            "DELETE FROM rol_permiso WHERE permiso_id IN ("
+            "SELECT id FROM permiso WHERE nombre = ANY(:nombres))"
+        ),
+        {"nombres": permiso_nombres},
+    )
+    conn.execute(
+        sa.text("DELETE FROM permiso WHERE nombre = ANY(:nombres)"),
+        {"nombres": permiso_nombres},
+    )
+
+    op.drop_table("factura")
+
+    op.drop_index("ix_liquidacion_tenant_cohorte_periodo", table_name="liquidacion")
+    op.drop_table("liquidacion")
+
+    op.drop_index("ix_salario_plus_tenant_grupo_rol", table_name="salario_plus")
+    op.drop_table("salario_plus")
+
+    op.drop_index("ix_salario_base_tenant_rol", table_name="salario_base")
+    op.drop_table("salario_base")
+
+    op.drop_column("materia", "categoria_plus")

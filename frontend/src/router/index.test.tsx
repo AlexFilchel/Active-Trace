@@ -3,18 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 import React from 'react'
-import { clearSession, setAccessToken } from '@/features/auth/services/sessionStore'
+import { clearSession } from '@/features/auth/services/sessionStore'
 import { createAppRouter } from './index'
-
-function makeToken(): string {
-  const payload = btoa(
-    JSON.stringify({ sub: 'u1', tenant_id: 'ten-1', roles: ['ADMIN'], exp: 9999999999 }),
-  )
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '')
-  return `header.${payload}.sig`
-}
 
 describe('App router', () => {
   beforeEach(() => {

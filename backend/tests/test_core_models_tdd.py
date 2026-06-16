@@ -2,13 +2,14 @@ import asyncio
 import uuid
 
 import pytest
-from sqlalchemy import String, delete, select
+from sqlalchemy import String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, get_session_factory, initialize_database
 
 
 from app.models import Tenant, TenantScopedMixin
+from tests.usuarios_test_utils import clean_database, ensure_schema
 
 
 class SampleTenantRecord(TenantScopedMixin, Base):
@@ -20,24 +21,20 @@ class SampleTenantRecord(TenantScopedMixin, Base):
 
 @pytest.fixture
 async def tenant_db_session(valid_env):
+    await ensure_schema()
     engine = initialize_database()
 
     async with engine.begin() as connection:
-        await connection.run_sync(Tenant.__table__.create, checkfirst=True)
         await connection.run_sync(SampleTenantRecord.__table__.create, checkfirst=True)
 
     session_factory = get_session_factory()
 
     async with session_factory() as session:
-        await session.execute(delete(SampleTenantRecord))
-        await session.execute(delete(Tenant))
-        await session.commit()
+        await clean_database(session)
 
         yield session
 
-        await session.execute(delete(SampleTenantRecord))
-        await session.execute(delete(Tenant))
-        await session.commit()
+        await clean_database(session)
 
 
 @pytest.mark.asyncio

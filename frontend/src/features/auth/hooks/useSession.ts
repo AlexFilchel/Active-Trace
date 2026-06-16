@@ -64,30 +64,28 @@ export function useSession() {
 }
 
 export function useRehydrateSession() {
-  const [done, setDone] = useState(false)
+  // done=true immediately when there's nothing async to do:
+  // no refresh token OR access token is already present
+  const [done, setDone] = useState(() => {
+    const rt = getRefreshToken()
+    return !rt || !!getAccessToken()
+  })
 
   useEffect(() => {
     const rt = getRefreshToken()
-    if (!rt) {
-      setDone(true)
-      return
-    }
-    // Access might be missing after reload — try refresh
-    if (!getAccessToken()) {
-      authService
-        .refresh(rt)
-        .then((res) => {
-          setAccessToken(res.access_token)
-          setRefreshToken(res.refresh_token)
-          notifyAll()
-        })
-        .catch(() => {
-          clearSession()
-        })
-        .finally(() => setDone(true))
-    } else {
-      setDone(true)
-    }
+    if (!rt || getAccessToken()) return
+    // Have a refresh token but no access token — rehydrate asynchronously
+    authService
+      .refresh(rt)
+      .then((res) => {
+        setAccessToken(res.access_token)
+        setRefreshToken(res.refresh_token)
+        notifyAll()
+      })
+      .catch(() => {
+        clearSession()
+      })
+      .finally(() => setDone(true))
   }, [])
 
   return { done }

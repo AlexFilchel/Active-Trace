@@ -1,12 +1,13 @@
 import uuid
 
 import pytest
-from sqlalchemy import String, delete, text
+from sqlalchemy import String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, get_session_factory, initialize_database
 from app.models import Tenant, TenantScopedMixin
 from app.repositories import TenantScopedRepository
+from tests.usuarios_test_utils import clean_database, ensure_schema
 
 
 class RepositoryRecord(TenantScopedMixin, Base):
@@ -18,10 +19,10 @@ class RepositoryRecord(TenantScopedMixin, Base):
 
 @pytest.fixture
 async def tenant_repository_session(valid_env):
+    await ensure_schema()
     engine = initialize_database()
 
     async with engine.begin() as connection:
-        await connection.run_sync(Tenant.__table__.create, checkfirst=True)
         await connection.run_sync(RepositoryRecord.__table__.create, checkfirst=True)
         # Ensure additive columns exist if tenant table was left in a downgraded state
         await connection.execute(text("ALTER TABLE tenant ADD COLUMN IF NOT EXISTS moodle_ws_url VARCHAR(500)"))
@@ -30,15 +31,11 @@ async def tenant_repository_session(valid_env):
     session_factory = get_session_factory()
 
     async with session_factory() as session:
-        await session.execute(delete(RepositoryRecord))
-        await session.execute(delete(Tenant))
-        await session.commit()
+        await clean_database(session)
 
         yield session
 
-        await session.execute(delete(RepositoryRecord))
-        await session.execute(delete(Tenant))
-        await session.commit()
+        await clean_database(session)
 
 
 @pytest.mark.asyncio

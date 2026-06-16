@@ -22,6 +22,7 @@ from app.core.security import create_access_token, decode_access_token, hash_pas
 from app.models import AuditLog, AuthUser, Permiso, Rol, RolPermiso, Tenant
 from app.models.auth import AuthLoginChallenge, AuthPasswordResetToken, AuthRefreshSession, AuthTotpCredential
 from app.models.usuarios import Asignacion, Usuario
+from tests.usuarios_test_utils import clean_database, ensure_schema
 
 
 @pytest.fixture
@@ -30,6 +31,7 @@ async def impersonation_app(valid_env):
     from app.api.v1.routers.auth import router
     from app.models.audit import AuditLog as AuditLogModel
 
+    await ensure_schema()
     engine = initialize_database()
     async with engine.begin() as conn:
         await conn.run_sync(Tenant.__table__.create, checkfirst=True)
@@ -45,21 +47,7 @@ async def impersonation_app(valid_env):
 
     session_factory = get_session_factory()
     async with session_factory() as session:
-        # TRUNCATE audit_log first (bypasses row-level trigger), then FK deps
-        from sqlalchemy import text
-        await session.execute(text("TRUNCATE TABLE audit_log"))
-        await session.execute(delete(Asignacion))
-        await session.execute(delete(RolPermiso))
-        await session.execute(delete(Permiso))
-        await session.execute(delete(Rol))
-        await session.execute(delete(Usuario))
-        await session.execute(delete(AuthPasswordResetToken))
-        await session.execute(delete(AuthLoginChallenge))
-        await session.execute(delete(AuthTotpCredential))
-        await session.execute(delete(AuthRefreshSession))
-        await session.execute(delete(AuthUser))
-        await session.execute(delete(Tenant))
-        await session.commit()
+        await clean_database(session)
 
         tenant = Tenant(name="Impersonation Test", slug="impersonation-test")
         session.add(tenant)
