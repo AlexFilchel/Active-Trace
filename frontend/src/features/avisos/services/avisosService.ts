@@ -3,12 +3,20 @@ import type { Aviso, AvisoCreate, Acknowledgment } from '../types'
 
 export const avisosService = {
   async getAvisos(): Promise<Aviso[]> {
-    const res = await apiClient.get<Aviso[]>('/api/avisos')
-    return res.data
+    const res = await apiClient.get<any[]>('/api/avisos/gestion')
+    return (res.data ?? []).map((item: any) => ({
+      id: item.id,
+      titulo: item.titulo,
+      cuerpo: item.cuerpo,
+      scope: item.alcance === 'General' ? 'tenant' : item.alcance === 'Materia' ? 'comision' : 'cohorte',
+      scope_id: item.materia_id ?? item.cohorte_id ?? undefined,
+      publicado: item.activo ?? true,
+      creado_en: item.created_at,
+    }))
   },
 
   async createAviso(data: AvisoCreate): Promise<Aviso> {
-    const res = await apiClient.post<Aviso>('/api/avisos', data)
+    const res = await apiClient.post<Aviso>('/api/avisos/gestion', data)
     return res.data
   },
 

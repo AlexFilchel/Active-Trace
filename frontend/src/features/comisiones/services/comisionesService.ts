@@ -14,7 +14,7 @@ import type {
 } from '../types'
 
 export const comisionesService = {
-  // ── C-10: Calificaciones ──────────────────────────────────────────────────
+  // ── C-10: Calificaciones (requieren comision_id = materia_id) ────────────
 
   async getActividades(comisionId: ComisionId, tipo?: string): Promise<Actividad[]> {
     const params: Record<string, string> = { comision_id: comisionId }
@@ -60,44 +60,73 @@ export const comisionesService = {
     return res.data
   },
 
-  async getNotasFinales(comisionId: ComisionId): Promise<NotaFinal[]> {
-    const res = await apiClient.get<NotaFinal[]>('/api/calificaciones/notas-finales', {
-      params: { comision_id: comisionId },
+  // ── C-11: Análisis (scope automático por JWT, sin comision_id) ───────────
+
+  async getAtrasados(): Promise<AlumnoAtrasado[]> {
+    const tipoLabel: Record<string, string> = {
+      nota_bajo_umbral: 'Nota bajo umbral',
+      sin_entrega: 'Sin entrega',
+      sin_nota: 'Sin nota',
+    }
+    const res = await apiClient.get<{ items: any[] }>('/api/analisis/atrasados')
+    return (res.data.items ?? []).map((item: any) => {
+      const motivos: any[] = item.motivos ?? []
+      const tiposUnicos = [...new Set(motivos.map((m: any) => tipoLabel[m.tipo] ?? m.tipo))]
+      return {
+        alumno_id: item.entrada_padron_id,
+        nombre: item.nombre,
+        apellido: item.apellidos,
+        legajo: item.comision ?? '',
+        actividades_pendientes: motivos.map((m: any) => m.actividad),
+        motivo: tiposUnicos.join(', '),
+      }
     })
-    return res.data
   },
 
-  // ── C-11: Análisis ────────────────────────────────────────────────────────
-
-  async getAtrasados(comisionId: ComisionId): Promise<AlumnoAtrasado[]> {
-    const res = await apiClient.get<AlumnoAtrasado[]>('/api/atrasados', {
-      params: { comision_id: comisionId },
-    })
-    return res.data
+  async getRanking(): Promise<RankingItem[]> {
+    const res = await apiClient.get<{ items: any[] }>('/api/analisis/ranking-aprobadas')
+    return (res.data.items ?? []).map((item: any, idx: number) => ({
+      alumno_id: item.entrada_padron_id,
+      nombre: item.nombre,
+      apellido: item.apellidos,
+      legajo: item.comision ?? '',
+      promedio: item.aprobadas_count ?? 0,
+      posicion: idx + 1,
+    }))
   },
 
-  async getRanking(comisionId: ComisionId): Promise<RankingItem[]> {
-    const res = await apiClient.get<RankingItem[]>('/api/analisis/ranking', {
-      params: { comision_id: comisionId },
-    })
-    return res.data
+  async getNotasFinales(): Promise<NotaFinal[]> {
+    const res = await apiClient.get<{ items: any[] }>('/api/analisis/notas-finales')
+    return (res.data.items ?? []).map((item: any) => ({
+      alumno_id: item.entrada_padron_id,
+      nombre: item.nombre,
+      apellido: item.apellidos,
+      legajo: item.comision ?? '',
+      nota_final: item.tiene_nota_final ? parseFloat(item.nota_final) : null,
+      estado: item.tiene_nota_final ? 'con_nota' : 'sin_nota',
+    }))
   },
 
-  async getEntregasSinCorregir(comisionId: ComisionId): Promise<EntregaSinCorregir[]> {
-    const res = await apiClient.get<EntregaSinCorregir[]>('/api/analisis/entregas-sin-corregir', {
-      params: { comision_id: comisionId },
-    })
-    return res.data
+  async getReporteRapido(): Promise<ReporteRapido> {
+    const res = await apiClient.get<any>('/api/analisis/materia/resumen')
+    const activos = res.data.alumnos_activos ?? 0
+    const atrasados = res.data.alumnos_atrasados ?? 0
+    return {
+      total_alumnos: activos,
+      aprobados: activos - atrasados,
+      reprobados: atrasados,
+      sin_nota: 0,
+      atrasados,
+      promedio_general: null,
+    }
   },
 
-  async getReporteRapido(comisionId: ComisionId): Promise<ReporteRapido> {
-    const res = await apiClient.get<ReporteRapido>('/api/analisis/reporte-rapido', {
-      params: { comision_id: comisionId },
-    })
-    return res.data
+  async getEntregasSinCorregir(): Promise<EntregaSinCorregir[]> {
+    // El backend solo expone export CSV para este dato; retornamos vacío.
+    return []
   },
 
-  // ── C-12: Comunicaciones ──────────────────────────────────────────────────
+  // ── C-12: Comunicaciones ─────────────────────────────────────────────────
 
   async previewComunicacion(comisionId: ComisionId, tipo: string): Promise<ComunicacionPreview> {
     const res = await apiClient.post<ComunicacionPreview>('/api/comunicaciones/preview', {

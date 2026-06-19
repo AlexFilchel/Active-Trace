@@ -36,11 +36,11 @@ export function ComisionesPage() {
   // Data queries
   const { data: actividades = [] } = useActividades(selectedId)
   const { data: umbral } = useUmbral(selectedId)
-  const { data: atrasados = [] } = useAtrasados(selectedId)
-  const { data: ranking = [] } = useRanking(selectedId)
-  const { data: notas = [] } = useNotasFinales(selectedId)
-  const { data: reporte } = useReporteRapido(selectedId)
-  const { data: entregas = [] } = useEntregasSinCorregir(selectedId)
+  const { data: atrasados = [] } = useAtrasados()
+  const { data: ranking = [] } = useRanking()
+  const { data: notas = [] } = useNotasFinales()
+  const { data: reporte } = useReporteRapido()
+  const { data: entregas = [] } = useEntregasSinCorregir()
   const { data: estadoComunicaciones = [] } = useComunicacionesEstado(selectedId)
 
   // Mutations
@@ -78,13 +78,7 @@ export function ComisionesPage() {
         </div>
       </div>
 
-      {!selectedId ? (
-        <p className="text-sm text-gray-500 italic">
-          Ingresá el ID de una comisión para comenzar.
-        </p>
-      ) : (
-        <>
-          {/* Tab bar */}
+      {/* Tab bar */}
           <div className="flex border-b border-gray-200">
             {TABS.map((tab) => (
               <button
@@ -197,8 +191,6 @@ export function ComisionesPage() {
               </section>
             </div>
           )}
-        </>
-      )}
     </div>
   )
 }

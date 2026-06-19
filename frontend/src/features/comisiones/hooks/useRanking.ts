@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { comisionesService } from '../services/comisionesService'
-import type { ComisionId } from '../types'
 
-export function useRanking(comisionId: ComisionId | undefined) {
+export function useRanking() {
   return useQuery({
-    queryKey: ['comisiones', comisionId, 'ranking'],
-    queryFn: () => comisionesService.getRanking(comisionId!),
-    enabled: !!comisionId,
+    queryKey: ['analisis', 'ranking'],
+    queryFn: () => comisionesService.getRanking(),
   })
 }
